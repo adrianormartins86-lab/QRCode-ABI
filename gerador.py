@@ -12,8 +12,13 @@ st.write("Insira um link e faça o upload de uma logo para gerar um QR Code pers
 # Campo para o usuário passar o link
 link = st.text_input("Cole o link aqui:")
 
-# Campo para upload da logo
-logo_file = st.file_uploader("Faça upload da logo (Opcional - PNG ou JPG)", type=["png", "jpg", "jpeg"])
+# --- ALTERAÇÃO AQUI: Colunas para centralizar e diminuir o uploader ---
+# Criamos 3 colunas: as das pontas com peso 1, e a do meio com peso 2 (50% do espaço)
+col_vazia_esq, col_central, col_vazia_dir = st.columns([1, 2, 1])
+
+with col_central:
+    # Campo para upload da logo agora fica restrito à coluna central
+    logo_file = st.file_uploader("Faça upload da logo (Opcional - PNG ou JPG)", type=["png", "jpg", "jpeg"])
 
 # Criação do botão "Gerar QR Code"
 if st.button("Gerar QR Code"):
@@ -44,7 +49,7 @@ if st.button("Gerar QR Code"):
             # Redimensiona a logo com alta qualidade
             logo = logo.resize((basewidth, hsize), Image.Resampling.LANCZOS)
             
-            # Converte a logo para RGBA para garantir que fundos transparentes funcionem (como no seu passarinho)
+            # Converte a logo para RGBA para garantir que fundos transparentes funcionem
             logo = logo.convert("RGBA")
             
             # Calcula as coordenadas X e Y para colar a logo exatamente no centro
