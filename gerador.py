@@ -6,13 +6,39 @@ from PIL import Image
 # Configuração da página
 st.set_page_config(page_title="Gerador de QR Code", page_icon="📱")
 
+# --- NOVIDADE: Injeção de CSS para botões verdes elegantes ---
+st.markdown("""
+    <style>
+    /* Estilização dos botões do Streamlit */
+    div.stButton > button, div.stDownloadButton > button {
+        background-color: #2E8B57 !important; /* Verde elegante (SeaGreen) */
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Efeito ao passar o mouse (Hover) */
+    div.stButton > button:hover, div.stDownloadButton > button:hover {
+        background-color: #1f6b3f !important; /* Verde mais escuro */
+        box-shadow: 0 6px 8px rgba(0,0,0,0.2) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    /* Cor do texto ao clicar (Active) */
+    div.stButton > button:active, div.stDownloadButton > button:active {
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("📱 Gerador de QR Code com Logo")
 st.write("Insira um link e faça o upload de uma logo para gerar um QR Code personalizado.")
 
 # Campo para o usuário passar o link
 link = st.text_input("Cole o link aqui:")
 
-# --- NOVO LAYOUT: Lado a Lado ---
 # Coluna 1 (esquerda) com peso 2, Coluna 2 (direita) com peso 1
 col_esq, col_dir = st.columns([2, 1])
 
@@ -24,7 +50,7 @@ with col_dir:
     # Pequeno truque para alinhar o botão mais para baixo, acompanhando o centro do uploader
     st.write("")
     st.write("")
-    # O botão de gerar agora fica na direita e foi salvo em uma variável
+    # O botão de gerar agora fica na direita
     gerar_btn = st.button("Gerar QR Code", use_container_width=True)
 
 # A verificação agora é se a variável gerar_btn foi ativada
@@ -77,7 +103,7 @@ if gerar_btn:
         with col2:
             st.image(byte_im, use_container_width=True)
             
-            # Botão para baixar a imagem
+            # Botão para baixar a imagem (também ficará verde por causa do CSS)
             st.download_button(
                 label="Baixar Imagem (PNG)",
                 data=byte_im,
