@@ -33,7 +33,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("📱 Gerador de QR Code com Logo")
+st.title("📱 Gerador de QR Code")
 st.write("Insira um link e faça o upload de uma logo para gerar um QR Code personalizado.")
 
 # Campo para o usuário passar o link
