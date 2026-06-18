@@ -1,12 +1,12 @@
 import streamlit as st
 import qrcode
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 # Configuração da página
 st.set_page_config(page_title="Gerador de QR Code", page_icon="📱")
 
-# --- NOVIDADE: Injeção de CSS para botões verdes elegantes ---
+# --- Injeção de CSS para botões verdes elegantes ---
 st.markdown("""
     <style>
     /* Estilização dos botões do Streamlit */
@@ -36,8 +36,9 @@ st.markdown("""
 st.title("📱 Gerador de QR Code")
 st.write("Insira um link e faça o upload de uma logo para gerar um QR Code personalizado.")
 
-# Campo para o usuário passar o link
+# Campos para o usuário
 link = st.text_input("Cole o link aqui:")
+titulo = st.text_input("Título do QR Code (Opcional - Ex: Básico, Corredor 3):")
 
 # Coluna 1 (esquerda) com peso 2, Coluna 2 (direita) com peso 1
 col_esq, col_dir = st.columns([2, 1])
@@ -91,6 +92,45 @@ if gerar_btn:
             # Cola a logo no centro
             img_qr.paste(logo, (pos_x, pos_y), logo)
 
+        # --- NOVIDADE: Adicionando o Título no topo da imagem ---
+        if titulo:
+            # Tenta carregar uma fonte padrão do sistema (cobre Windows e Linux/Streamlit Cloud)
+            try:
+                font = ImageFont.truetype("arial.ttf", 40)
+            except IOError:
+                try:
+                    font = ImageFont.truetype("DejaVuSans.ttf", 40)
+                except IOError:
+                    font = ImageFont.load_default()
+
+            draw_temp = ImageDraw.Draw(img_qr)
+            
+            # Calcula o tamanho do texto para centralizar (compatível com novas e velhas versões do Pillow)
+            try:
+                bbox = draw_temp.textbbox((0, 0), titulo, font=font)
+                text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
+            except AttributeError:
+                text_width, text_height = draw_temp.textsize(titulo, font=font)
+
+            # Define a altura do cabeçalho branco (tamanho do texto + margem)
+            header_height = text_height + 40 
+            
+            # Cria uma nova imagem com espaço extra no topo
+            new_img = Image.new('RGB', (img_qr.width, img_qr.height + header_height), color='white')
+            
+            # Desenha o texto centralizado na nova imagem
+            draw = ImageDraw.Draw(new_img)
+            text_x = (new_img.width - text_width) // 2
+            text_y = 20
+            draw.text((text_x, text_y), titulo, font=font, fill="black")
+            
+            # Cola o QR Code gerado abaixo do texto
+            new_img.paste(img_qr, (0, header_height))
+            
+            # Substitui a variável para salvar a imagem completa
+            img_qr = new_img
+
         # Salva a imagem final na memória
         buf = BytesIO()
         img_qr.save(buf, format="PNG")
@@ -103,11 +143,11 @@ if gerar_btn:
         with col2:
             st.image(byte_im, use_container_width=True)
             
-            # Botão para baixar a imagem (também ficará verde por causa do CSS)
+            # Botão para baixar a imagem
             st.download_button(
                 label="Baixar Imagem (PNG)",
                 data=byte_im,
-                file_name="meu_qrcode_com_logo.png",
+                file_name="qrcode_personalizado.png",
                 mime="image/png",
                 use_container_width=True
             )
