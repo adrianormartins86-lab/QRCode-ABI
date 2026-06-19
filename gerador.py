@@ -2,6 +2,8 @@ import streamlit as st
 import qrcode
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
+import os
+import urllib.request
 
 # Configuração da página
 st.set_page_config(page_title="Gerador de QR Code", page_icon="📱")
@@ -92,31 +94,28 @@ if gerar_btn:
             # Cola a logo no centro
             img_qr.paste(logo, (pos_x, pos_y), logo)
 
-        # --- NOVIDADE: Sistema de Auto-Escala para o Título ---
+        # --- NOVIDADE: Baixando a fonte e forçando o redimensionamento ---
         if titulo:
             draw_temp = ImageDraw.Draw(img_qr)
+            
+            # Nome do arquivo de fonte que será salvo no servidor
+            font_path = "Roboto-Bold.ttf"
+            
+            # Se a fonte não existir localmente, o app faz o download dela do Google Fonts
+            if not os.path.exists(font_path):
+                url_fonte = "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto-Bold.ttf"
+                try:
+                    urllib.request.urlretrieve(url_fonte, font_path)
+                except Exception as e:
+                    st.warning("Aviso: Falha ao baixar fonte personalizada. O texto pode não ser redimensionado corretamente.")
             
             # Definimos a meta: o texto deve ocupar 80% da largura do QR Code
             largura_alvo = img_qr.width * 0.8
             tamanho_fonte = 20 # Tamanho inicial
             
-            # Lista robusta de fontes (cobre Windows, Mac e Linux/Streamlit Cloud)
-            fontes_possiveis = ["arialbd.ttf", "arial.ttf", "calibrib.ttf", "DejaVuSans-Bold.ttf", "FreeSansBold.ttf", "LiberationSans-Bold.ttf"]
-            fonte_escolhida = None
-            
-            for f in fontes_possiveis:
-                try:
-                    # Testa se a fonte existe no sistema operacional atual
-                    ImageFont.truetype(f, tamanho_fonte)
-                    fonte_escolhida = f
-                    break
-                except IOError:
-                    continue
-            
-            if fonte_escolhida:
-                font = ImageFont.truetype(fonte_escolhida, tamanho_fonte)
-                
-                # LOOP MÁGICO: Aumenta a fonte de 2 em 2 até bater a meta de 80% da largura
+            # LOOP MÁGICO: Aumenta a fonte de 2 em 2 até bater a meta de 80% da largura
+            if os.path.exists(font_path):
+                font = ImageFont.truetype(font_path, tamanho_fonte)
                 while True:
                     try:
                         bbox = draw_temp.textbbox((0, 0), titulo, font=font)
@@ -130,9 +129,9 @@ if gerar_btn:
                         break
                     
                     tamanho_fonte += 2
-                    font = ImageFont.truetype(fonte_escolhida, tamanho_fonte)
+                    font = ImageFont.truetype(font_path, tamanho_fonte)
             else:
-                # Fallback extremo caso nenhuma fonte exista (evita quebrar o app)
+                # Se tudo der errado (sem internet no servidor, etc), usa a padrão
                 font = ImageFont.load_default()
                 try:
                     bbox = draw_temp.textbbox((0, 0), titulo, font=font)
@@ -141,8 +140,8 @@ if gerar_btn:
                 except AttributeError:
                     text_width, text_height = draw_temp.textsize(titulo, font=font)
 
-            # Altura do cabeçalho = altura do texto + 100 pixels de margem para "respirar"
-            header_height = text_height + 100 
+            # Altura do cabeçalho = altura do texto + 80 pixels de margem para "respirar"
+            header_height = text_height + 80 
             
             # Cria uma nova imagem com espaço extra no topo
             new_img = Image.new('RGB', (img_qr.width, img_qr.height + header_height), color='white')
