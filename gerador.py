@@ -94,18 +94,23 @@ if gerar_btn:
 
         # --- NOVIDADE: Adicionando o Título no topo da imagem ---
         if titulo:
-            # Tenta carregar uma fonte padrão do sistema (cobre Windows e Linux/Streamlit Cloud)
+            # Tamanho da fonte fixado em 100 conforme solicitado
+            tamanho_fonte = 100 
+            
+            # Tenta carregar a fonte em NEGRITO (Bold)
             try:
-                font = ImageFont.truetype("arial.ttf", 40)
+                # 'arialbd.ttf' é o Arial Bold no Windows
+                font = ImageFont.truetype("arialbd.ttf", tamanho_fonte)
             except IOError:
                 try:
-                    font = ImageFont.truetype("DejaVuSans.ttf", 40)
+                    # 'DejaVuSans-Bold.ttf' é a versão negrito no servidor do Streamlit
+                    font = ImageFont.truetype("DejaVuSans-Bold.ttf", tamanho_fonte)
                 except IOError:
                     font = ImageFont.load_default()
 
             draw_temp = ImageDraw.Draw(img_qr)
             
-            # Calcula o tamanho do texto para centralizar (compatível com novas e velhas versões do Pillow)
+            # Calcula o tamanho do texto para centralizar
             try:
                 bbox = draw_temp.textbbox((0, 0), titulo, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -113,8 +118,8 @@ if gerar_btn:
             except AttributeError:
                 text_width, text_height = draw_temp.textsize(titulo, font=font)
 
-            # Define a altura do cabeçalho branco (tamanho do texto + margem)
-            header_height = text_height + 40 
+            # Espaço em branco (+ 80) para dar um respiro maior já que a fonte cresceu
+            header_height = text_height + 80 
             
             # Cria uma nova imagem com espaço extra no topo
             new_img = Image.new('RGB', (img_qr.width, img_qr.height + header_height), color='white')
@@ -122,7 +127,10 @@ if gerar_btn:
             # Desenha o texto centralizado na nova imagem
             draw = ImageDraw.Draw(new_img)
             text_x = (new_img.width - text_width) // 2
-            text_y = 20
+            
+            # Desce o texto um pouquinho (margem superior de 40)
+            text_y = 40 
+            
             draw.text((text_x, text_y), titulo, font=font, fill="black")
             
             # Cola o QR Code gerado abaixo do texto
