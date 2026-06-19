@@ -95,7 +95,7 @@ if gerar_btn:
         # --- NOVIDADE: Adicionando o Título no topo da imagem ---
         if titulo:
             # Tamanho da fonte fixado em 100 conforme solicitado
-            tamanho_fonte = 100 
+            tamanho_fonte = 1100 
             
             # Tenta carregar a fonte em NEGRITO (Bold)
             try:
