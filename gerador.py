@@ -92,44 +92,65 @@ if gerar_btn:
             # Cola a logo no centro
             img_qr.paste(logo, (pos_x, pos_y), logo)
 
-        # --- NOVIDADE: Adicionando o Título no topo da imagem ---
+        # --- NOVIDADE: Sistema de Auto-Escala para o Título ---
         if titulo:
-            # Tamanho da fonte fixado em 100 conforme solicitado
-            tamanho_fonte = 1100 
-            
-            # Tenta carregar a fonte em NEGRITO (Bold)
-            try:
-                # 'arialbd.ttf' é o Arial Bold no Windows
-                font = ImageFont.truetype("arialbd.ttf", tamanho_fonte)
-            except IOError:
-                try:
-                    # 'DejaVuSans-Bold.ttf' é a versão negrito no servidor do Streamlit
-                    font = ImageFont.truetype("DejaVuSans-Bold.ttf", tamanho_fonte)
-                except IOError:
-                    font = ImageFont.load_default()
-
             draw_temp = ImageDraw.Draw(img_qr)
             
-            # Calcula o tamanho do texto para centralizar
-            try:
-                bbox = draw_temp.textbbox((0, 0), titulo, font=font)
-                text_width = bbox[2] - bbox[0]
-                text_height = bbox[3] - bbox[1]
-            except AttributeError:
-                text_width, text_height = draw_temp.textsize(titulo, font=font)
+            # Definimos a meta: o texto deve ocupar 80% da largura do QR Code
+            largura_alvo = img_qr.width * 0.8
+            tamanho_fonte = 20 # Tamanho inicial
+            
+            # Lista robusta de fontes (cobre Windows, Mac e Linux/Streamlit Cloud)
+            fontes_possiveis = ["arialbd.ttf", "arial.ttf", "calibrib.ttf", "DejaVuSans-Bold.ttf", "FreeSansBold.ttf", "LiberationSans-Bold.ttf"]
+            fonte_escolhida = None
+            
+            for f in fontes_possiveis:
+                try:
+                    # Testa se a fonte existe no sistema operacional atual
+                    ImageFont.truetype(f, tamanho_fonte)
+                    fonte_escolhida = f
+                    break
+                except IOError:
+                    continue
+            
+            if fonte_escolhida:
+                font = ImageFont.truetype(fonte_escolhida, tamanho_fonte)
+                
+                # LOOP MÁGICO: Aumenta a fonte de 2 em 2 até bater a meta de 80% da largura
+                while True:
+                    try:
+                        bbox = draw_temp.textbbox((0, 0), titulo, font=font)
+                        text_width = bbox[2] - bbox[0]
+                        text_height = bbox[3] - bbox[1]
+                    except AttributeError:
+                        text_width, text_height = draw_temp.textsize(titulo, font=font)
+                        
+                    # Se atingir 80% da largura ou um limite de segurança (300), o loop para
+                    if text_width >= largura_alvo or tamanho_fonte >= 300:
+                        break
+                    
+                    tamanho_fonte += 2
+                    font = ImageFont.truetype(fonte_escolhida, tamanho_fonte)
+            else:
+                # Fallback extremo caso nenhuma fonte exista (evita quebrar o app)
+                font = ImageFont.load_default()
+                try:
+                    bbox = draw_temp.textbbox((0, 0), titulo, font=font)
+                    text_width = bbox[2] - bbox[0]
+                    text_height = bbox[3] - bbox[1]
+                except AttributeError:
+                    text_width, text_height = draw_temp.textsize(titulo, font=font)
 
-            # Espaço em branco (+ 80) para dar um respiro maior já que a fonte cresceu
-            header_height = text_height + 80 
+            # Altura do cabeçalho = altura do texto + 100 pixels de margem para "respirar"
+            header_height = text_height + 100 
             
             # Cria uma nova imagem com espaço extra no topo
             new_img = Image.new('RGB', (img_qr.width, img_qr.height + header_height), color='white')
             
-            # Desenha o texto centralizado na nova imagem
+            # Desenha o texto
             draw = ImageDraw.Draw(new_img)
             text_x = (new_img.width - text_width) // 2
-            
-            # Desce o texto um pouquinho (margem superior de 40)
-            text_y = 40 
+            text_y = (header_height - text_height) // 2 # Centraliza perfeitamente na vertical
             
             draw.text((text_x, text_y), titulo, font=font, fill="black")
             
